@@ -1,0 +1,55 @@
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Videos y archivos temporales de procesamiento
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.m4a
+temp_*/
+tmp_*/
+output_*/
+
+# Archivos temporales del sistema
+*.tmp
+*.temp
+
+# API keys y configuración sensible
+.env
+*.env
+secrets.toml
+config.local.toml
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ffmpeg/moviepy cache
+FFMPEG_*
+ImageMagick-*
