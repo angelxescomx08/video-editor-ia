@@ -26,18 +26,22 @@ def render_silence_panel(silence_service: SilenceService, config: SidebarConfig)
 
 
 def _run_detection(video_path: str, silence_service: SilenceService, config: SidebarConfig) -> None:
-    progress_ph = st.empty()
-    progress_ph.info("⏳ Analizando audio… esto puede tardar 1-2 minutos.")
+    status_ph = st.empty()
+    bar = st.progress(0, text="Analizando audio…")
+
+    status_ph.info("⏳ Analizando audio… esto puede tardar 1-2 minutos.")
     try:
         segs = silence_service.detect(
             video_path,
             noise_threshold_pct=float(config["noise_pct"]),
             min_silence_dur=float(config["min_silence"]),
             buffer=float(config["buffer"]),
-            progress_ph=progress_ph,
+            progress_ph=status_ph,
+            on_progress=lambda v: bar.progress(v, text=f"Analizando audio… {int(v * 100)}%"),
         )
         st.session_state.silence_segments = segs
-        progress_ph.success(f"✅ Detectados {len(segs)} segmentos a conservar.")
+        bar.progress(1.0, text="Completado")
+        status_ph.success(f"✅ Detectados {len(segs)} segmentos a conservar.")
     except Exception as e:
-        progress_ph.error(f"❌ Error: {e}")
+        status_ph.error(f"❌ Error: {e}")
     st.rerun()

@@ -1,6 +1,10 @@
+import os
+
 import streamlit as st
 
 from src.domain.models import SidebarConfig
+
+_CPU_COUNT: int = os.cpu_count() or 1
 
 
 def render_sidebar() -> SidebarConfig:
@@ -36,6 +40,19 @@ def render_sidebar() -> SidebarConfig:
             st.success("Exportando con CRF 18 (alta calidad)")
 
         st.markdown("---")
+        st.markdown("### ⚡ Procesamiento Paralelo")
+        n_workers: int = st.slider(
+            "Núcleos CPU",
+            min_value=1,
+            max_value=_CPU_COUNT,
+            value=_CPU_COUNT,
+            step=1,
+            help=f"Núcleos disponibles en este equipo: {_CPU_COUNT}. "
+                 "Reduce este valor si notas que el sistema se queda sin recursos.",
+        )
+        st.caption(f"Usando {n_workers} de {_CPU_COUNT} núcleos disponibles.")
+
+        st.markdown("---")
         st.caption("Video Editor IA v2.0\nFFmpeg + MoviePy + Streamlit")
 
     return SidebarConfig(
@@ -44,4 +61,5 @@ def render_sidebar() -> SidebarConfig:
         buffer=buffer,
         reduce_quality=reduce_quality,
         crf_value=crf_value,
+        n_workers=n_workers,
     )

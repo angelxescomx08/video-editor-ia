@@ -29,3 +29,4 @@ class SidebarConfig(TypedDict):
     buffer: float
     reduce_quality: bool
     crf_value: int
+    n_workers: int

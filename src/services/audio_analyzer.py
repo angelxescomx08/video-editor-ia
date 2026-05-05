@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import numpy as np
 from moviepy import VideoFileClip
 
@@ -11,6 +13,7 @@ class AudioAnalyzer:
         self,
         video_path: str,
         progress_ph=None,
+        on_progress: Callable[[float], None] | None = None,
     ) -> tuple[list[float], float, float]:
         """Devuelve (rms_list, chunk_dur, duration). rms_list vacía si no hay audio."""
         if progress_ph:
@@ -43,8 +46,13 @@ class AudioAnalyzer:
 
         norm = np.abs(audio) / max_amp
         n = len(norm) // chunk_size
-        rms_list = [
-            float(np.sqrt(np.mean(norm[i * chunk_size:(i + 1) * chunk_size] ** 2)))
-            for i in range(n)
-        ]
+
+        # Reshape → matriz (n_chunks, chunk_size) y calcular RMS de cada fila en una sola op
+        chunks = norm[: n * chunk_size].reshape(n, chunk_size)
+        rms_array = np.sqrt(np.mean(chunks ** 2, axis=1))
+        rms_list: list[float] = rms_array.tolist()
+
+        if on_progress:
+            on_progress(1.0)
+
         return rms_list, chunk_size / AUDIO_SAMPLE_RATE, duration

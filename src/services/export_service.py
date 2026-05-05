@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from src.config import EXPORT_AUDIO_BITRATE, EXPORT_HQ_CRF, EXPORT_HQ_PRESET
 from src.domain.models import Segment
 from src.services.ffmpeg_service import FFmpegService
@@ -17,6 +19,8 @@ class ExportService:
         reduce_quality: bool,
         crf_value: int,
         progress_ph=None,
+        on_progress: Callable[[float], None] | None = None,
+        total_duration: float = 0.0,
     ) -> tuple[bool, str]:
         if not segments:
             return False, "No hay segmentos para exportar."
@@ -35,4 +39,4 @@ class ExportService:
             "-movflags", "+faststart",
             dst,
         ]
-        return self._ffmpeg.run_command(args, progress_ph)
+        return self._ffmpeg.run_command(args, progress_ph, on_progress, total_duration)

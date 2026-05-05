@@ -11,6 +11,9 @@ from src.domain.models import SidebarConfig
 from src.services.audio_analyzer import AudioAnalyzer
 from src.services.export_service import ExportService
 from src.services.ffmpeg_service import FFmpegService
+from src.services.parallel_exporter import ParallelExporter
+from src.services.parallel_proxy_generator import ParallelProxyGenerator
+from src.services.video_concat import VideoConcat
 from src.services.filter_builder import FilterBuilder
 from src.services.parser_service import CutsParserService
 from src.services.proxy_service import ProxyService
@@ -58,17 +61,21 @@ def _init_session_state() -> None:
 
 
 def _build_services() -> tuple[
-    VideoProbeService, ProxyService, SilenceService,
-    CutsParserService, SegmentCalculator, ExportService,
+    VideoProbeService, ProxyService, ParallelProxyGenerator,
+    SilenceService, CutsParserService, SegmentCalculator,
+    ExportService, ParallelExporter,
 ]:
     ffmpeg_service = FFmpegService()
+    concat = VideoConcat(ffmpeg_service)
     return (
         VideoProbeService(),
         ProxyService(ffmpeg_service),
+        ParallelProxyGenerator(ffmpeg_service, concat),
         SilenceService(AudioAnalyzer(), SilenceDetector()),
         CutsParserService(),
         SegmentCalculator(),
         ExportService(ffmpeg_service, FilterBuilder()),
+        ParallelExporter(ffmpeg_service, concat),
     )
 
 
@@ -77,7 +84,7 @@ def main() -> None:
     _check_dependencies()
     _init_session_state()
 
-    probe_svc, proxy_svc, silence_svc, parser_svc, calculator, export_svc = _build_services()
+    probe_svc, proxy_svc, parallel_proxy_svc, silence_svc, parser_svc, calculator, export_svc, parallel_svc = _build_services()
     config: SidebarConfig = render_sidebar()
 
     st.markdown("# 🎬 Video Editor IA")
@@ -94,13 +101,13 @@ def main() -> None:
     ])
 
     with tab_proxy:
-        render_proxy_panel(proxy_svc)
+        render_proxy_panel(proxy_svc, parallel_proxy_svc, config)
     with tab_silence:
         render_silence_panel(silence_svc, config)
     with tab_gemini:
         render_gemini_panel(parser_svc)
     with tab_export:
-        render_export_panel(export_svc, calculator, config)
+        render_export_panel(export_svc, parallel_svc, calculator, config)
 
     st.markdown("---")
     st.caption("Video Editor IA · FFmpeg + MoviePy + Streamlit · Solo uso local")
