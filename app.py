@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json
 import os
@@ -97,7 +98,7 @@ except ImportError:
     _import_errors.append("ffmpeg-python  →  pip install ffmpeg-python")
 
 try:
-    from moviepy import VideoFileClip, concatenate_videoclips
+    from moviepy.editor import VideoFileClip, concatenate_videoclips
     _moviepy_ok = True
 except ImportError:
     _import_errors.append("moviepy  →  pip install moviepy")
@@ -487,44 +488,39 @@ st.markdown("# 🎬 Video Editor IA")
 st.markdown("Automatiza el flujo de edición para YouTube — silencios + muletillas con IA.")
 st.markdown("---")
 
-# ── Step 1: Seleccionar video por ruta ────────────────────────────────────
-st.markdown('<div class="card"><div class="card-title">📁 Paso 1 · Seleccionar Video</div>', unsafe_allow_html=True)
+# ── Step 1: Upload ─────────────────────────────────────────────────────────
+st.markdown('<div class="card"><div class="card-title">📁 Paso 1 · Cargar Video</div>', unsafe_allow_html=True)
 
-st.caption("Pega la ruta completa a tu archivo de video. No hay límite de tamaño — la app trabaja directamente con el archivo en disco.")
+uploaded = st.file_uploader(
+    "Selecciona tu archivo de video (OBS, MP4, MKV, MOV…)",
+    type=["mp4", "mkv", "mov", "avi", "wmv", "flv", "ts", "m4v"],
+    help="Soporta archivos grandes. El archivo se copia a un directorio temporal.",
+)
 
-col_path, col_load = st.columns([5, 1])
-with col_path:
-    input_path = st.text_input(
-        "Ruta del video",
-        placeholder=r"C:\Users\TuUsuario\Videos\OBS\grabacion.mkv",
-        label_visibility="collapsed",
-    )
-with col_load:
-    btn_load = st.button("Cargar", use_container_width=True)
+if uploaded is not None:
+    # Save uploaded file to temp dir (handles large files)
+    tmp_dir = Path(tempfile.gettempdir()) / "video_editor_ia"
+    tmp_dir.mkdir(exist_ok=True)
+    video_path = str(tmp_dir / uploaded.name)
 
-if btn_load and input_path.strip():
-    video_path = input_path.strip().strip('"')  # quita comillas si el usuario las pegó
-    if not os.path.isfile(video_path):
-        st.error(f"Archivo no encontrado: `{video_path}`")
-    elif st.session_state.video_path != video_path:
+    if st.session_state.video_path != video_path:
+        with st.spinner("Copiando archivo al directorio de trabajo…"):
+            with open(video_path, "wb") as f:
+                f.write(uploaded.read())
         st.session_state.video_path = video_path
         st.session_state.proxy_path = None
         st.session_state.silence_segments = None
         st.session_state.final_segments = None
-        st.session_state.gemini_cuts = None
         info = probe_video(video_path)
         st.session_state.video_info = info
-        st.rerun()
 
-if st.session_state.video_path:
     info = st.session_state.video_info or {}
-    st.markdown(f"`{st.session_state.video_path}`")
     if "error" not in info:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Duración", fmt_duration(info.get("duration", 0)))
         c2.metric("Resolución", f"{info.get('width')}×{info.get('height')}")
         c3.metric("FPS", info.get("fps"))
-        c4.metric("Tamaño", fmt_size(st.session_state.video_path))
+        c4.metric("Tamaño", fmt_size(video_path))
         st.markdown(
             f'<span class="pill">🎞 {info.get("vcodec","—")}</span>'
             f'<span class="pill">🎵 {info.get("acodec","—")}</span>',

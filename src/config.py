@@ -1,0 +1,15 @@
+APP_TITLE = "Video Editor IA"
+APP_ICON = "🎬"
+APP_VERSION = "2.0"
+
+PROXY_CRF: int = 28
+PROXY_PRESET: str = "faster"
+PROXY_AUDIO_BITRATE: str = "128k"
+
+EXPORT_HQ_CRF: int = 18
+EXPORT_HQ_PRESET: str = "slow"
+EXPORT_AUDIO_BITRATE: str = "192k"
+
+AUDIO_SAMPLE_RATE: int = 44100
+AUDIO_CHUNK_MS: int = 50
+MIN_SEGMENT_DURATION: float = 0.05
